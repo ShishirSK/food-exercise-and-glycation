@@ -3,8 +3,9 @@
 # exercise and simulate the blood sugar levels
 
 require 'time'
+require 'csv'
 
-BASE_SUGAR_LEVEL = 80
+BASE_SUGAR_LEVEL = 80.0
 
 # Inputs and reference data
 @food_db = {}
@@ -19,17 +20,18 @@ BASE_SUGAR_LEVEL = 80
 # Variables
 @food_impact_period = 120		# Food increases blood sugar over 2 hours
 @exercise_impact_period	= 60	# Exercise decreases blood sugar over 1 hour
-@glycation_threshold = 150
+@glycation_threshold = 150.0
 @simulation_period = 0
 @glycation_count = 0
 
-def initialize_simulation(hours = 5)
 
-	@food_db["1"] = {name: "something", glycemic_index: 60}
-	@exercise_db["1"] = {name: "Crunches", exercise_index: 30}
+# Initiates the script DB and waits for user input
+def initialize_simulation(hours = 24)
 
-	render_script_information
-	get_user_inputs
+	load_db						# Load food and exercise data
+	render_script_information	# Show introductory information
+	get_user_inputs				# Accept inputs from the user
+
 
 	# Initialize the tracking maps.
 	@simulation_period = hours * 60 # Convert to minutes
@@ -37,15 +39,15 @@ def initialize_simulation(hours = 5)
 	@exercise_impact = (0..@simulation_period).each_with_object(false).to_h
 	@net_value_map = (0..@simulation_period).each_with_object(0).to_h
 
-	blood_sugar_simulation
+	blood_sugar_simulation		# 
 end
 
 
 # Driver method
 def blood_sugar_simulation
 
-	parse_inputs
-	simulate_sugar_levels
+	parse_inputs				# Parse and process inputs
+	simulate_sugar_levels 		# Simulate sugar levels and display output
 end
 
 # Get inputs from the user
@@ -154,14 +156,14 @@ end
 # @param [String] food_id ID of the food consumed
 # @return [Float] Increase rate of sugar
 def sugar_increase_rate_by_food(food_id)
-	return (@food_db[food_id][:glycemic_index]).to_f / @food_impact_period
+	@food_db.key?(food_id) ? (@food_db[food_id][:glycemic_index]).to_f / @food_impact_period : 0.0
 end	
 
 # Returns sugar decrease per minute on food intake
 # @param [String] exc_id ID of the exercise performed
 # @return [Float] Decrease rate of sugar
 def sugar_decrease_rate_by_exercise(exc_id)
-	return ((@exercise_db[exc_id][:exercise_index]).to_f / @exercise_impact_period)
+	@exercise_db.key?(exc_id) ? ((@exercise_db[exc_id][:exercise_index]).to_f / @exercise_impact_period) : 0.0
 end
 
 # Returns the current sugar level as it normalized
@@ -171,9 +173,9 @@ end
 def normalize_sugar_level(current_sugar_level)
 
 	if current_sugar_level.round == BASE_SUGAR_LEVEL
-		return current_sugar_level.round 
+		return current_sugar_level.round.to_f
 	elsif current_sugar_level.floor == BASE_SUGAR_LEVEL
-		return current_sugar_level.floor
+		return current_sugar_level.floor.to_f
 	else
 		(current_sugar_level.round > BASE_SUGAR_LEVEL) ? current_sugar_level -= 1 : current_sugar_level += 1
 	end
@@ -186,9 +188,9 @@ end
 def render_results(sugar_levels_by_minute, is_extended_simulation = false)
 
 	puts "Note: This simulation is for an extended period as blood levels had not normalized till the end of the default period." if is_extended_simulation
-	puts
+	puts 
 	puts sugar_levels_by_minute.inspect
-	puts
+	puts 
 	puts "Glycation count is at #{@glycation_count}"
 	puts
 
@@ -210,6 +212,28 @@ def render_script_information
 	puts "* ---------------------------------------------------------------------------"
 	puts
 end
+
+
+# Load food and Exercise data from CSV files
+def load_db
+
+	# Load exercise data and populate the exercise_db hash
+	arr_of_exercises = CSV.read("./ExerciseDB.csv")
+	arr_of_exercises.delete_at(0)
+
+	arr_of_exercises.each do |arr|
+		@exercise_db[arr[0]] = {name: arr[1], exercise_index: arr[2].to_i}
+	end
+
+	# Load food data and populate the food_db hash
+	arr_of_food = CSV.read("./FoodDB.csv")
+	arr_of_food.delete_at(0)
+
+	arr_of_food.each  do |arr|
+		@food_db[arr[0]] = {name: arr[1], glycemic_index: arr[2].to_i}
+	end	
+end
+
 
 initialize_simulation
 
