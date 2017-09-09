@@ -28,7 +28,10 @@ def initialize_simulation(hours = 5)
 	@food_db["1"] = {name: "something", glycemic_index: 60}
 	@exercise_db["1"] = {name: "Crunches", exercise_index: 30}
 
-	# Considering a 5 hour scenario
+	render_script_information
+	get_user_inputs
+
+	# Initialize the tracking maps.
 	@simulation_period = hours * 60 # Convert to minutes
 	@food_impact = (0..@simulation_period).each_with_object(false).to_h
 	@exercise_impact = (0..@simulation_period).each_with_object(false).to_h
@@ -41,32 +44,21 @@ end
 # Driver method
 def blood_sugar_simulation
 
-	# Accept inputs here
-	get_user_inputs
-	# Parse inputs
 	parse_inputs
-	# Calculate net sugar level change
 	simulate_sugar_levels
-	# Keep track of glycation
-	# Output
-
 end
 
 # Get inputs from the user
 def get_user_inputs
 
-	# Conside a 5 hour case to include normalization
-	# Ate something and did crunches 
-	# Normalize the blood sugar level between hour 2 and 3
-	# Did crunches again after 3 hours
+	input = "begin"
 
-	@user_inputs << "Food, 1, 2017-09-09 00:00:23 -0700"
-	@user_inputs << "Food, 1, 2017-09-09 00:20:23 -0700"
-	@user_inputs << "Food, 1, 2017-09-09 00:40:23 -0700"
-	@user_inputs << "Food, 1, 2017-09-09 01:00:23 -0700"
-	@user_inputs << "Exercise, 1, 2017-09-09 00:30:23 -0700"
-	@user_inputs << "Exercise, 1, 2017-09-09 01:45:23 -0700"
-	@user_inputs << "Exercise, 1, 2017-09-09 03:15:23 -0700"
+	while input != "exit" do 
+		puts "Enter Food or Exercise with ID and timestamp in above mentioned format"
+		puts "Type exit to finish."
+		input = gets.chomp
+		@user_inputs << input unless input == "exit"
+	end
 end
 
 
@@ -200,6 +192,23 @@ def render_results(sugar_levels_by_minute, is_extended_simulation = false)
 	puts "Glycation count is at #{@glycation_count}"
 	puts
 
+end
+
+# Render the necessary information at the start of the script
+def render_script_information
+
+	puts "* ---------------------------------------------------------------------------"
+	puts "* This is a CLI interface to accept records of food intake and exercise"
+	puts "* along with timestamps and simulate the blood sugar levels through the day."
+	puts "*"
+	puts "* Food intake information is to be entered as below"
+	puts '*        "Food, 1, 2017-09-09 00:00:23 -0700"'
+	puts "*"
+	puts "* Exercise information is to be entered as below"
+	puts '*        "Exercise, 1, 2017-09-09 01:45:23 -0700"'
+	puts "*"
+	puts "* ---------------------------------------------------------------------------"
+	puts
 end
 
 initialize_simulation
